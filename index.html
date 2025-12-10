@@ -1,0 +1,1013 @@
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content:;">
+    <!-- Keyboard fix & Layout optimization -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+    <title>Kurd Sport v86 (Royal Colorful Edition)</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="cordova.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root { 
+            --primary: #3b82f6; 
+            --admin-color: #ef4444; 
+            --live-color: #ef4444; 
+            --gold: #FFD700; 
+            --bg-main: #0f172a; 
+            --bg-sidebar: #1e293b; 
+            --bg-app: #0f172a;
+            --bg-card: #1e293b; 
+            --bg-input: #334155;
+            --bg-chat-header: #1e293b;
+            --bg-msg-received: #1e293b; 
+            --bg-msg-sent: #2563eb; 
+            --bg-hover: rgba(255,255,255,0.05);
+            --bg-active: rgba(59, 130, 246, 0.2);
+            --text-main: #f1f5f9; 
+            --text-sub: #94a3b8; 
+            --border: rgba(148, 163, 184, 0.1);
+            --shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; height: 100dvh; width: 100%; overflow: hidden; background: var(--bg-main); color: var(--text-main); position: fixed; top: 0; left: 0; }
+        #app-container { display: none; width: 100%; height: 100%; background: var(--bg-app); flex-direction: row; position: relative; overflow: hidden; }
+        
+        #sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 90; display: none; }
+        .sidebar { width: 280px; background: var(--bg-sidebar); display: flex; flex-direction: column; border-left: 1px solid var(--border); z-index: 100; height: 100%; position: absolute; right: 0; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding-bottom: calc(20px + env(safe-area-inset-bottom)); box-shadow: -2px 0 10px rgba(0,0,0,0.5); will-change: transform; }
+        .sidebar.active { transform: translateX(0); }
+        @media (min-width: 769px) { .sidebar { position: relative; transform: none; box-shadow: none; padding-bottom: 0; } #sidebar-overlay { display: none !important; } }
+        
+        .profile { padding: 20px; text-align: center; border-bottom: 1px solid var(--border); flex-shrink: 0; background: #1e293b; }
+        .profile img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--primary); margin-bottom: 10px; object-fit: cover; cursor: pointer; }
+        #profile-name { font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 5px; text-transform: capitalize; }
+        .bio-text { font-size: 0.8rem; color: var(--text-sub); margin-top: 5px; font-style: italic; white-space: pre-wrap; padding: 0 10px;}
+        .profile-actions { display: flex; justify-content: center; gap: 10px; margin-top: 10px; flex-wrap: wrap;}
+        .small-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-main); font-size: 0.75rem; padding: 5px 12px; border-radius: 15px; cursor: pointer; transition: 0.2s; }
+        
+        .nav-list { flex: 1; overflow-y: auto; padding: 10px; min-height: 0; }
+        
+        /* ---- NEW TEAM ITEM DESIGN (COLORFUL) ---- */
+        .nav-item { 
+            padding: 15px 20px; 
+            margin-bottom: 8px; 
+            border-radius: 15px; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: linear-gradient(90deg, #1e293b 0%, #253345 100%); 
+            position: relative; 
+            color: var(--text-main); 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            border: 1px solid rgba(255,255,255,0.03);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .nav-item::before { 
+            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            transform: translateX(-100%); transition: 0.5s;
+        }
+        .nav-item:active { transform: scale(0.97); }
+        .nav-item.active { 
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1)); 
+            border: 1px solid var(--primary); 
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+        }
+
+        /* --- RANKING BADGES & ANIMATIONS --- */
+        .rank-badge { margin: 0 8px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
+        
+        /* 1. KING */
+        .rank-1-icon { color: #FFD700; font-size: 1.4rem; animation: floatCrown 2.5s ease-in-out infinite; }
+        /* 2. SILVER */
+        .rank-2-icon { color: #C0C0C0; font-size: 1.3rem; }
+        /* 3. BRONZE */
+        .rank-3-icon { color: #CD7F32; font-size: 1.3rem; }
+
+        /* COLORFUL NUMBERS (4+) */
+        .rank-number {
+            display: inline-block;
+            width: 22px; height: 22px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 22px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #fff;
+            margin: 0 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        /* Specific Colors for Lower Ranks */
+        .t-rank-4 .rank-number { background: #3498db; box-shadow: 0 0 8px #3498db; } /* Blue */
+        .t-rank-5 .rank-number { background: #e74c3c; box-shadow: 0 0 8px #e74c3c; } /* Red */
+        .t-rank-6 .rank-number { background: #9b59b6; box-shadow: 0 0 8px #9b59b6; } /* Purple */
+        .t-rank-7 .rank-number { background: #2ecc71; box-shadow: 0 0 8px #2ecc71; } /* Green */
+        .t-rank-8 .rank-number { background: #e67e22; box-shadow: 0 0 8px #e67e22; } /* Orange */
+
+        @keyframes floatCrown {
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+            50% { transform: translateY(-3px) rotate(5deg) scale(1.1); }
+        }
+
+        .friend-folder-header { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); }
+        #friend-list-container { padding-left: 10px; border-left: 2px solid #334155; margin-left: 10px; display: none; }
+        
+        .section-title { font-size: 0.8rem; color: var(--text-sub); margin: 15px 10px 5px 0; font-weight: bold; position: relative; display: flex; justify-content: space-between; align-items: center; }
+        .notif-badge { background: #ff4757; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; display: none; }
+
+        .chat-section { flex: 1; display: flex; flex-direction: column; height: 100%; width: 100%; position: relative; background: var(--bg-app); overflow: hidden; }
+        .chat-header { flex: 0 0 60px; padding: 0 15px; background: var(--bg-chat-header); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); z-index: 20; color: var(--text-main); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
+        #requests-popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
+        .req-box { background: var(--bg-card); padding: 20px; border-radius: 15px; width: 90%; max-width: 350px; border: 1px solid var(--border); text-align: center; color: var(--text-main); }
+        .req-list { max-height: 200px; overflow-y: auto; margin-top: 10px; }
+        .req-item { background: var(--bg-hover); margin-bottom: 5px; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+
+        #floating-stream { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); width: 180px; height: auto; aspect-ratio: 16/9; background: #000; border: 2px solid var(--gold); border-radius: 10px; z-index: 2000; display: none; box-shadow: 0 5px 10px rgba(0,0,0,0.5); transition: all 0.3s; overflow: hidden; }
+        #floating-stream.expanded { width: 100%; height: 100%; top: 0; left: 0; bottom: 0; right: 0; transform: none; max-width: none; border-radius: 0; border: none; z-index: 10000; }
+        #floating-stream.expanded #stream-content { height: 100%; padding-bottom: 0; }
+        .stream-controls { position: absolute; top: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); padding: 5px; display: flex; justify-content: space-between; opacity: 1; pointer-events: auto; z-index: 10; }
+        .resize-btn { background: none; border: none; color: white; cursor: pointer; text-shadow: 0 0 3px black; font-size: 1rem; }
+
+        #golden-ball-container { position: absolute; bottom: 80px; left: 20px; z-index: 50; display: flex; flex-direction: column; align-items: center; }
+        #golden-btn { width: 60px; height: 60px; border-radius: 50%; border: none; background: radial-gradient(circle, #e74c3c 0%, #c0392b 100%); color: white; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        #golden-btn:active { transform: scale(0.9); }
+        #golden-btn.completed { background: radial-gradient(circle, #FFD700 0%, #FDB931 100%); color: #000; border: 2px solid white; animation: pulseGold 2s infinite; pointer-events: none; }
+        #golden-btn i { font-size: 1.2rem; margin-bottom: 2px; }
+        
+        @keyframes pulseGold { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        .scroll-area { flex: 1; min-height: 0; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch; }
+        #messages-list { display: flex; flex-direction: column; width: 100%; gap: 5px; }
+        .msg-row { display: flex; align-items: flex-end; margin-bottom: 5px; width: 100%; direction: ltr; }
+        .msg-row.sent { flex-direction: row-reverse; }
+        
+        .msg-row.sent .msg { margin-left: auto; background: var(--bg-msg-sent); color: white; border-bottom-left-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .msg-row:not(.sent) { flex-direction: row; }
+        .msg-row:not(.sent) .msg { margin-right: auto; background: var(--bg-msg-received); border: 1px solid var(--border); border-bottom-right-radius: 4px; color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        .msg-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; margin: 0 8px; border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; cursor: pointer; }
+        .msg { max-width: 75%; width: fit-content; padding: 10px 15px; border-radius: 18px; font-size: 0.95rem; position: relative; word-wrap: break-word; white-space: pre-wrap; cursor: pointer; text-align: right; direction: rtl; display: flex; flex-direction: column; align-items: flex-start; }
+        .msg-sender { display: block; font-size: 0.75rem; color: #60a5fa; margin-bottom: 5px; font-weight: bold; width: 100%; text-align: right; }
+        .msg.sent .msg-sender { display: none; }
+        .msg-time { font-size: 0.65rem; color: rgba(255,255,255,0.6); margin-top: 5px; display: flex; align-items: center; gap: 5px; width: 100%; justify-content: flex-end; direction: ltr; }
+        .ticks { font-family: monospace; font-size: 0.8rem; margin-left: 5px; letter-spacing: -2px; font-weight: bold; }
+        .ticks.sent { color: #cbd5e1; } .ticks.seen { color: #69f0ae; } 
+        
+        .reply-preview-bar { background: rgba(0,0,0,0.2); padding: 8px; border-right: 4px solid var(--gold); border-left: none; margin-bottom: 8px; border-radius: 5px; width: 100%; text-align: right; }
+        .reply-preview-bar div:first-child { color: var(--gold); font-size: 0.75rem; font-weight: bold; margin-bottom: 2px; }
+        .reply-preview-bar div:last-child { font-size: 0.8rem; color: #cbd5e1; font-style: italic; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        
+        .reaction-heart { position: absolute; bottom: -8px; left: -5px; background: var(--bg-card); border-radius: 50%; padding: 2px; font-size: 0.8rem; border: 1px solid #555; animation: popIn 0.3s; }
+        
+        .chat-input-box { flex: 0 0 auto; padding: 10px; background: var(--bg-sidebar); display: flex; flex-direction: column; border-top: 1px solid var(--border); z-index: 30; padding-bottom: calc(10px + env(safe-area-inset-bottom)); position: relative; }
+        #reply-ui, #edit-ui { display: none; background: #334155; padding: 8px; border-radius: 8px; margin-bottom: 8px; justify-content: space-between; align-items: center; border-left: 3px solid var(--primary); }
+        #edit-ui { border-left-color: #feca57; }
+        .input-row { display: flex; gap: 10px; align-items: center; width: 100%; }
+        .input-field { flex: 1; background: var(--bg-input); border: 1px solid var(--border); padding: 12px 20px; border-radius: 30px; color: var(--text-main); outline: none; font-size: 16px; text-align: right; }
+        .icon-btn { width: 40px; height: 40px; border-radius: 50%; background: #334155; border: 1px solid var(--border); color: #ccc; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .send-btn { background: var(--primary); color: white; border: none; }
+        
+        #ai-bot-menu { display: none; background: var(--bg-card); padding: 15px; border-radius: 15px 15px 0 0; border-top: 2px solid var(--primary); position: absolute; bottom: 100%; left: 0; width: 100%; z-index: 50; flex-direction: column; gap: 10px; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
+        .ai-title { color: var(--gold); font-weight: bold; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+        .ai-textarea { width: 100%; height: 80px; background: var(--bg-input); border: 1px solid #444; border-radius: 10px; color: var(--text-main); padding: 10px; resize: none; outline: none; font-size: 0.9rem; }
+        .ai-btn-group { display: flex; gap: 10px; justify-content: flex-end; }
+        .ai-result-box { background: rgba(46, 213, 115, 0.1); border: 1px solid #2ed573; padding: 10px; border-radius: 8px; color: var(--text-main); font-size: 0.9rem; margin-top: 5px; display: none; white-space: pre-wrap; cursor: pointer; }
+        
+        .robot-container { width: 50px; height: 40px; background: #334155; border-radius: 10px; position: relative; margin: 0 auto; border: 2px solid #38bdf8; display: flex; justify-content: center; align-items: center; }
+        .robot-eyes { display: flex; gap: 10px; margin-bottom: 5px; }
+        .robot-eye { width: 8px; height: 8px; background: #38bdf8; border-radius: 50%; animation: blink 3s infinite; }
+        .robot-mouth { width: 15px; height: 3px; background: #38bdf8; border-radius: 2px; transition: height 0.2s; }
+        .robot-talking .robot-mouth { animation: talk 0.2s infinite alternate; height: 6px; }
+        @keyframes blink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+        @keyframes talk { 0% { width: 10px; } 100% { width: 20px; } }
+
+        .msg-sticker { height: 35px; width: auto; object-fit: contain; display: block; margin: 5px 0; border-radius: 4px;}
+
+        .action-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 400; display: none; }
+        .action-menu { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--bg-card); border-radius: 20px 20px 0 0; padding: 25px; z-index: 401; transition: bottom 0.25s ease-out; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; text-align: center; padding-bottom: calc(25px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); will-change: bottom; }
+        .action-menu.active { bottom: 0; }
+        .action-item { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--text-sub); cursor: pointer; }
+        .action-icon { width: 50px; height: 50px; background: var(--bg-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: 0.2s; border: 1px solid var(--border); }
+        
+        #admin-panel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 1300; display: none; flex-direction: column; }
+        .admin-nav { display: flex; background: #1e293b; padding: 10px; gap: 10px; overflow-x: auto; flex-shrink: 0; }
+        .adm-tab { padding: 10px 20px; border-radius: 8px; background: #334155; color: #aaa; white-space: nowrap; cursor: pointer; }
+        .adm-tab.active { background: var(--primary); color: white; }
+        .adm-content { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 80px; }
+        .control-group { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        .history-item { background:rgba(0,0,0,0.3); padding:10px; margin-bottom:5px; border-radius:8px; border-left:3px solid var(--gold); display:flex; justify-content:space-between; align-items:center;}
+        
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #1e293b; padding: 15px 25px; border-radius: 30px; border: 1px solid var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 2000; transition: 0.5s; display: flex; align-items: center; gap: 10px; opacity: 0; pointer-events: none; cursor: pointer; }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 999999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        
+        #login-screen { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e293b; padding: 30px; border-radius: 20px; border: 1px solid var(--border); width: 90%; max-width: 400px; text-align: center; z-index: 99999; display: none; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; justify-content: center; }
+        .avatar-option { width: 100%; aspect-ratio: 1/1; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; object-fit: cover; background: rgba(255,255,255,0.1); }
+        .avatar-option.selected { border: 3px solid var(--gold); transform: scale(1.1); }
+        
+        .upload-btn-wrapper { margin-top: 10px; margin-bottom: 20px; }
+        .custom-file-upload { display: inline-block; padding: 8px 15px; cursor: pointer; background: #334155; color: white; border-radius: 8px; border: 1px solid #475569; font-size: 0.8rem; }
+        input[type="file"] { display: none; }
+
+        input, select, textarea { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,0.3); color: white; outline: none; }
+        option { background: #1e293b; }
+        .btn { background: var(--primary); color: white; padding: 15px; width: 100%; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid var(--primary); width: 30px; height: 30px; animation: spin 1s linear infinite; display: none; margin: 10px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .live-match-card { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--live-color); border-radius: 20px; padding: 15px; margin-bottom: 10px; box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+        .live-header { display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; }
+        .live-badge { background: var(--live-color); padding: 3px 10px; border-radius: 5px; font-size: 0.8rem; animation: pulse 1.5s infinite; color: white;}
+        .live-timer { font-family: monospace; font-size: 1.2rem; font-weight: bold; color: #fff; letter-spacing: 2px; }
+        .live-content { display: flex; justify-content: space-between; align-items: center; color: white;}
+        .team-box { text-align: center; flex: 1; font-weight: bold; font-size: 1rem; overflow: hidden; white-space: nowrap; }
+        .live-score-container { font-size: 2rem; font-weight: bold; background: rgba(255,255,255,0.1); padding: 5px 20px; border-radius: 10px; transition: all 0.3s; }
+        .goal-flash { background: #FFD700 !important; color: #000 !important; animation: flashScore 0.8s infinite; transform: scale(1.1); }
+        @keyframes flashScore { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .link-btn { background: var(--bg-hover); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid var(--border); color: var(--text-main); }
+        .sponsors-container { display: flex; overflow-x: auto; gap: 15px; padding: 15px; background: rgba(0,0,0,0.2); margin-bottom: 10px; border-bottom: 1px solid var(--border); scrollbar-width: none; }
+        .sponsors-container::-webkit-scrollbar { display: none; }
+        .sponsor-card { flex: 0 0 160px; background: linear-gradient(145deg, #1e293b, #0f172a); border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 15px; padding: 15px; text-align: center; position: relative; transition: transform 0.3s; cursor: pointer; overflow: hidden; }
+        .sponsor-card:active { transform: scale(0.95); }
+        .sponsor-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); margin-bottom: 10px; background: #000; }
+        .sponsor-name { color: white; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sponsor-phone { color: #aaa; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); z-index: 5000; display: none; justify-content: center; align-items: center; flex-direction: column; }
+        .giveaway-box { text-align: center; color: white; width: 90%; z-index: 5002; position: relative; }
+        .gw-title { font-size: 1.5rem; color: var(--gold); margin-bottom: 20px; text-transform: uppercase; animation: float 3s infinite; }
+        .gw-prize { font-size: 1.2rem; border: 2px solid var(--gold); padding: 15px; border-radius: 15px; display: inline-block; margin-bottom: 30px; }
+        .gw-timer { font-size: 5rem; font-weight: bold; font-family: monospace; color: #ff4757; }
+        .gw-rolling { font-size: 2rem; font-weight: bold; color: var(--primary); }
+        .gw-winner { font-size: 3rem; color: #2ed573; font-weight: 900; animation: winnerPop 1s infinite alternate; }
+        @keyframes winnerPop { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+        #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5001; }
+        #admin-gw-close { position: absolute; top: 20px; right: 20px; background: red; color: white; border: 2px solid white; padding: 10px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; z-index: 5003; display: none; }
+        
+        #users-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-card); z-index: 300; display: none; flex-direction: column; color: var(--text-main); }
+        .user-row { display: flex; align-items: center; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; }
+        .user-row img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #e74c3c; }
+        .status-dot.online { background: #3498db; box-shadow: 0 0 8px #3498db; }
+        #img-viewer { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9000; display:none; justify-content:center; align-items:center; flex-direction:column; }
+        #img-viewer img { max-width:90%; max-height:80%; border-radius:10px; border:2px solid #555; }
+        @media (max-width: 768px) { .back-btn { display: block; background: none; border: none; color: var(--text-main); font-size: 1.5rem; } .fullscreen-btn { background: none; border: none; color: var(--text-main); font-size: 1.2rem; cursor: pointer; } }
+        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
+        #ad-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 100000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        #ad-timer { position: absolute; top: 20px; right: 20px; color: white; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; font-weight: bold; border: 1px solid #555; font-family: monospace; font-size: 1.2rem; }
+        #ad-close-btn { display: none; position: absolute; top: 20px; right: 20px; background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4); animation: popIn 0.3s; }
+        .ad-placeholder { width: 90%; max-width: 350px; height: 400px; background: #1e293b; border: 2px dashed #444; display: flex; align-items: center; justify-content: center; color: #777; flex-direction: column; text-align: center; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="splash-screen">
+        <div class="loader" style="display:block; width:50px; height:50px; border-width:5px;"></div>
+        <h3 style="margin-top:20px; color:white;">بارکرن...</h3>
+    </div>
+
+    <div id="ad-overlay">
+        <div id="ad-timer">5</div>
+        <button id="ad-close-btn" onclick="app.closeAd()">❌ داخستن</button>
+        <div class="ad-placeholder">
+            <i class="fas fa-ad" style="font-size: 3rem; margin-bottom: 10px;"></i>
+            <h3>Reklam (Demo)</h3>
+            <p>ل ڤێرە ڕیکلاما گوگلی دێ دەردکەڤیت</p>
+        </div>
+    </div>
+
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3"></audio>
+    <audio id="win-sound" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+    <audio id="tick-sound" src="https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3"></audio>
+
+    <div id="toast" onclick="app.hideToast()">
+        <span style="font-size:1.5rem;">💬</span>
+        <div><div id="toast-title" style="font-weight:bold; color:#fff;"></div><div id="toast-body" style="font-size:0.8rem; color:#aaa;"></div></div>
+    </div>
+
+    <div id="img-viewer" onclick="this.style.display='none'"><img id="img-full"><div style="margin-top:20px; color:white;">دابخە</div></div>
+
+    <!-- REQUESTS POPUP -->
+    <div id="requests-popup">
+        <div class="req-box">
+            <h3 style="margin-bottom:10px;">داخوازێن هەڤالینیێ</h3>
+            <div id="requests-list" class="req-list"></div>
+            <button class="btn" onclick="document.getElementById('requests-popup').style.display='none'" style="background:#334155; margin-top:15px;">گرتن</button>
+        </div>
+    </div>
+
+    <div id="login-screen">
+        <div style="width: 120px; height: 120px; margin: 0 auto 20px auto;">
+            <svg viewBox="0 0 1024 1024" width="100%" height="100%">
+                <defs>
+                    <linearGradient id="zakhoRed" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#FF5252;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#D32F2F;stop-opacity:1" />
+                    </linearGradient>
+                    <linearGradient id="goldBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#FDB931;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#FFD700;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <path d="M512 50 C 512 50, 100 50, 100 350 C 100 700, 512 980, 512 980 C 512 980, 924 700, 924 350 C 924 50, 512 50, 512 50 Z" fill="url(#zakhoRed)" stroke="url(#goldBorder)" stroke-width="25"/>
+                <circle cx="512" cy="500" r="300" fill="#1e293b" stroke="white" stroke-width="10" />
+                <path d="M312 500 Q 512 300 712 500 L 712 530 Q 512 350 312 530 Z" fill="#FFD700" />
+                <text x="512" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="100" fill="white" letter-spacing="5">ZAKHO</text>
+            </svg>
+        </div>
+        
+        <h2 style="margin-bottom:10px; color:white;">کورد سپۆرت</h2>
+        <p style="font-size:0.8rem; color:#aaa; margin-bottom:10px;">وێنەکێ هەلبژێرە (Avatar)</p>
+        
+        <!-- CUSTOM UPLOAD BUTTON -->
+        <div class="upload-btn-wrapper">
+             <label for="avatar-upload" class="custom-file-upload">
+                <i class="fas fa-camera"></i> وێنەیێ گەلەریێ (15 ڕۆژان جارەکێ)
+            </label>
+            <input type="file" id="avatar-upload" accept="image/*" onchange="app.handleAvatarUpload(this)">
+        </div>
+
+        <div class="avatar-grid">
+            <img src="https://cdn-icons-png.flaticon.com/512/1999/1999625.png" class="avatar-option" onclick="app.selectAvatar(this.src, this)" title="Zelam">
+            <img src="https://cdn-icons-png.flaticon.com/512/6997/6997662.png" class="avatar-option" onclick="app.selectAvatar(this.src, this)" title="Jin">
+            <img src="https://cdn-icons-png.flaticon.com/512/2922/2922510.png" class="avatar-option" onclick="app.selectAvatar(this.src, this)" title="Kurk">
+            <img src="https://cdn-icons-png.flaticon.com/512/2922/2922561.png" class="avatar-option" onclick="app.selectAvatar(this.src, this)" title="Kçk">
+        </div>
+
+        <input type="text" id="login-name" placeholder="ناڤێ خۆ بنڤیسە (بێی ئیمۆجی)..." autocomplete="off">
+        <select id="login-team">
+            <option value="zakho">یانا زاخۆ 🔴</option>
+            <option value="duhok">یانا دهۆک 🟡</option>
+            <option value="erbil">یانا هەولێر 🏰</option>
+            <option value="newroz">یانا نەورۆز 🟠</option>
+        </select>
+        <div id="login-loader" class="loader"></div>
+        <button id="login-btn" class="btn" onclick="app.login()">چوونە ژوور</button>
+    </div>
+
+    <div id="app-container">
+        <!-- APP CONTENT -->
+        <div class="sidebar" id="sidebar">
+            <div class="profile">
+                <img id="profile-img" src="" onclick="app.viewImage(this.src)">
+                <h3 id="profile-name">User</h3>
+                <div id="profile-bio" class="bio-text">No Bio</div>
+                <div class="profile-actions">
+                    <button class="small-btn" onclick="app.editBio()"><i class="fas fa-pen"></i> بایۆ</button>
+                    <!-- RENAME BUTTON BACK (24h Limit) -->
+                    <button class="small-btn" onclick="app.renameUser()"><i class="fas fa-signature"></i> ناڤ</button>
+                    <!-- EDIT AVATAR BUTTON (15d Limit) -->
+                    <button class="small-btn" onclick="app.promptChangeAvatar()"><i class="fas fa-image"></i> وێنە</button>
+                </div>
+                <!-- ADMIN BUTTON HIDDEN BY DEFAULT (display:none) -->
+                <button id="admin-btn" onclick="app.toggleAdminAuth()" style="display:none; background:transparent; border:1px solid #555; color:var(--text-sub); padding:5px 15px; border-radius:20px; margin-top:10px; font-size:0.8rem;">ئەدمین پەنەڵ 🔒</button>
+            </div>
+            <!-- ... (Rest of Sidebar) ... -->
+            <div class="nav-list" id="nav-container">
+                <div class="section-title">ژوورێن گشتی</div><div id="team-list"></div>
+                <div class="section-title">لینک & ئەنجام</div><div class="nav-item" onclick="app.switchRoom('results', 'ئەنجام & لینک')"><span><i class="fas fa-trophy" style="color:var(--gold)"></i> ئەنجام</span></div>
+                <div class="section-title"><span>هەڤالێن من</span><span style="cursor:pointer;" onclick="app.openUsersModal()">➕</span></div>
+                <div class="nav-item" style="background:rgba(231,76,60,0.1); border:1px solid rgba(231,76,60,0.3); margin-bottom:5px;" onclick="app.openRequestsPopup()"><span>📩 داخواز <span id="req-badge" class="notif-badge" style="display:none;">0</span></span></div>
+                <div class="nav-item friend-folder-header" onclick="app.toggleFriendList()"><span>👥 لیستا هەڤالان</span><div style="display:flex; align-items:center; gap:5px;"><span id="friend-total-badge" class="notif-badge">0</span><i id="friend-arrow" class="fas fa-chevron-down"></i></div></div>
+                <div id="friend-list-container"><div id="friend-list"></div></div>
+            </div>
+            <div class="logout-area"><button onclick="app.logout()" style="width:100%; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:none; padding:10px; border-radius:10px;">دەرکەڤتن</button></div>
+        </div>
+        <div id="sidebar-overlay" onclick="ui.toggleSidebar(false)"></div>
+
+        <div class="chat-section">
+            <div class="chat-header"><div style="display:flex; align-items:center; gap:10px;"><button class="back-btn" onclick="ui.toggleSidebar(true)"><i class="fas fa-bars"></i></button><h3 id="room-header-title">Room</h3></div><button class="fullscreen-btn" onclick="app.openUsersModal()"><i class="fas fa-users"></i></button></div>
+            <div id="live-match-placeholder"></div>
+            <div id="sponsors-bar" class="sponsors-container" style="display:none;"></div>
+            <div id="floating-stream"><div class="stream-controls"><button class="resize-btn" onclick="app.toggleStreamSize()"><i class="fas fa-expand" id="stream-icon"></i></button><span style="color:red; font-size:0.7rem; font-weight:bold;">LIVE 🔴</span></div><div id="stream-content" style="width:100%; position:relative; padding-bottom:56.25%; height:0;"></div></div>
+            <div class="scroll-area" id="main-scroll"><div id="results-view" style="display:none; padding-top:20px;"><h3 style="border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:15px; color:var(--text-main);">لینکێن گرنگ 🔗</h3><div id="links-placeholder"></div></div><div id="messages-list"></div></div>
+            <div class="chat-input-box" id="input-area">
+                <div id="golden-ball-container"><button id="golden-btn" onclick="app.clickChallenge()"><i class="fas fa-trophy"></i><span id="click-count">0/10</span></button></div>
+                
+                <!-- NEW AI BOT MENU WITH ROBOT FACE -->
+                <div id="ai-bot-menu">
+                    <div class="robot-container" id="robo-face">
+                        <div class="robot-eyes">
+                            <div class="robot-eye"></div>
+                            <div class="robot-eye"></div>
+                        </div>
+                        <div class="robot-mouth"></div>
+                    </div>
+                    <div class="ai-title"><span>🤖 ڕاستڤەکرنا نڤیسینێ</span><span onclick="app.toggleAiBot()" style="cursor:pointer; color:#ef4444;">✖</span></div>
+                    <textarea id="ai-input-text" class="ai-textarea" placeholder="نڤیسینا خۆ ل ڤێرە بنڤیسە..."></textarea>
+                    <div class="ai-btn-group">
+                        <button class="small-btn" onclick="app.askAiToFix()"><span id="ai-loading-text">✨ ڕاستڤەکە</span></button>
+                    </div>
+                    <div id="ai-result-display" class="ai-result-box" onclick="app.useAiResult()"></div>
+                </div>
+
+                <div id="reply-ui"><div><span style="color:#94a3b8; font-size:0.8rem;">بەرسڤ بۆ:</span> <span id="reply-to-name" style="font-weight:bold; color:#fff;"></span></div><span onclick="app.cancelReply()" style="color:#ef4444; cursor:pointer;">✖</span></div><div id="edit-ui"><div><span style="color:#feca57; font-size:0.8rem;">دەستکاری:</span></div><span onclick="app.cancelEdit()" style="color:#ef4444; cursor:pointer;">✖</span></div>
+                <div class="input-row">
+                    <!-- ROBOT BUTTON -->
+                    <button class="icon-btn" onclick="app.toggleAiBot()" title="AI Robot">🤖</button>
+                    <input type="text" id="msg-input" class="input-field" placeholder="پەیام..." autocomplete="off">
+                    
+                    <!-- 🛑🛑 MODIFIED BUTTON START 🛑🛑 -->
+                    <!-- Added onmousedown="event.preventDefault()" -->
+                    <button class="icon-btn send-btn" id="send-btn-icon" onmousedown="event.preventDefault()" onclick="app.sendMessage()">➤</button>
+                    <!-- 🛑🛑 MODIFIED BUTTON END 🛑🛑 -->
+                    
+                </div>
+            </div>
+        </div>
+        <div class="action-menu-overlay" id="action-overlay" onclick="app.closeActionMenu()"></div><div class="action-menu" id="action-menu"></div>
+        <div id="users-modal"><div class="chat-header"><h3>👥 بەشداربوو</h3><button onclick="document.getElementById('users-modal').style.display='none'" style="background:none; border:none; color:var(--text-main); font-size:1.5rem;">✖</button></div><div style="padding:10px; background:var(--bg-app); border-bottom:1px solid var(--border);"><input type="text" id="user-search" placeholder="لێگەڕیان..." class="input-field" style="margin:0; width:100%;"><button onclick="app.searchUser()" class="btn" style="margin-top:5px; padding:8px;">لێگەڕیان</button></div><div class="scroll-area" id="all-users-list"><div style="text-align:center; color:#777; margin-top:20px;">هیچ بەکارهێنەر نینن</div></div></div>
+        <div id="giveaway-overlay" class="overlay"><canvas id="confetti"></canvas><button id="admin-gw-close" onclick="document.getElementById('giveaway-overlay').style.display='none'">✖ Close (Admin)</button><div class="giveaway-box"><div class="gw-title">🎁 کاتێ خەلاتایە! 🎁</div><div id="gw-prize-display" style="font-size:1.5rem; margin-bottom:20px;">---</div><div id="gw-stage-area"></div></div></div>
+        
+        <!-- ADMIN PANEL WITH HISTORY -->
+        <div id="admin-panel"><!-- Admin Panel content --> <div class="chat-header" style="background:var(--admin-color); color:white;"><h3>Admin Control</h3><button onclick="ui.toggleAdminPanel(false)" style="background:none; border:none; color:white; font-size:1.5rem;"><i class="fas fa-times"></i></button></div><div class="admin-nav"><div class="adm-tab active" onclick="ui.switchAdminTab('live')">🔴 Live</div><div class="adm-tab" onclick="ui.switchAdminTab('companies')">🏢 Companies</div><div class="adm-tab" onclick="ui.switchAdminTab('gifts')">🎁 Gifts</div><div class="adm-tab" onclick="ui.switchAdminTab('links')">🔗 Links</div><div class="adm-tab" onclick="ui.switchAdminTab('users')">👥 Users</div><div class="adm-tab" onclick="ui.switchAdminTab('banned')">🚫 Banned</div></div><div class="adm-content" style="color:white;"><div id="adm-tab-live"><div class="control-group"><div style="display:flex; gap:10px; margin-bottom:15px;"><input type="text" id="adm-t1" placeholder="Team 1" class="input-field"><input type="text" id="adm-t2" placeholder="Team 2" class="input-field"></div><div style="display:flex; gap:10px; margin-top:20px;"><button class="btn" style="background:#ffa502" onclick="app.toggleMatchTimer()">Start/Pause Timer ⏱️</button><button class="btn" style="background:#ff4757" onclick="app.endLiveMatch()">End Game</button></div><h4 style="margin-top:20px; border-bottom:1px solid #444; padding-bottom:5px;">Score Control:</h4><div class="score-ctrl"><div class="score-row"><span style="font-weight:bold; width:50px;">T1:</span><span id="adm-s1-disp" style="font-size:1.5rem; width:40px; text-align:center;">0</span><button class="btn" style="background:#2ed573; flex:1;" onclick="app.updateScore('t1', 1)">+ ⚽ GOAL</button><button class="btn" style="background:#ff4757; width:60px; font-size:0.8rem;" onclick="app.updateScore('t1', -1)">VAR ❌</button></div><div class="score-row"><span style="font-weight:bold; width:50px;">T2:</span><span id="adm-s2-disp" style="font-size:1.5rem; width:40px; text-align:center;">0</span><button class="btn" style="background:#2ed573; flex:1;" onclick="app.updateScore('t2', 1)">+ ⚽ GOAL</button><button class="btn" style="background:#ff4757; width:60px; font-size:0.8rem;" onclick="app.updateScore('t2', -1)">VAR ❌</button></div></div><button class="btn" style="background:#777; margin-top:10px;" onclick="app.resetScore()">Reset Score 0-0</button><h4 style="margin-top:20px; border-top:1px solid #444; padding-top:10px;">📺 Universal Live Stream</h4><textarea id="adm-embed-code" rows="4" class="input-field" placeholder='<iframe src="..." ...></iframe>'></textarea><div style="display:flex; gap:10px;"><button class="btn" style="background:red;" onclick="app.setLiveVideo()">Start Stream ▶️</button><button class="btn" style="background:#555;" onclick="app.stopLiveVideo()">Stop Stream ⏹️</button></div></div></div><div id="adm-tab-companies" style="display:none;"><div class="control-group"><input type="text" id="comp-name" placeholder="Company Name" class="input-field"><input type="text" id="comp-phone" placeholder="Phone" class="input-field"><input type="text" id="comp-logo" placeholder="Logo URL" class="input-field"><button class="btn" onclick="app.addCompany()">Add Company +</button></div><div id="adm-comp-list"></div></div><div id="adm-tab-gifts" style="display:none;"><button class="btn" style="background:#ff4757; margin-bottom:10px; border:2px solid white;" onclick="app.forceStopGiveaway()">🚫 ڕاگرتنا خەلاتی</button><button class="btn" style="background:#3498db; margin-bottom:20px; border:2px solid white;" onclick="app.resetGiveawayRound()">🔄 Reset Game</button><div class="control-group"><input type="text" id="adm-gift-name" placeholder="Gift Name" class="input-field"><button class="btn" onclick="app.addGift()">Add Gift</button></div><div id="adm-gift-list" style="margin-bottom:20px;"></div><h4 style="border-top:1px solid #555; padding-top:10px;">📜 مێژوویا براوه‌یان (Winner History)</h4><div id="adm-winner-history" style="max-height:200px; overflow-y:auto; margin-top:10px; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px;"></div><div style="margin-top:30px;"><button class="danger-btn" onclick="app.deleteAllMessages()">🗑️ ژێبرنا هەمی نامان</button></div></div><div id="adm-tab-links" style="display:none;"><div class="control-group"><input type="text" id="adm-link-title" placeholder="Title" class="input-field"><input type="text" id="adm-link-url" placeholder="URL" class="input-field"><button class="btn" onclick="app.addLink()">Add Link</button></div><div id="adm-links-list"></div></div><div id="adm-tab-users" style="display:none;"><div class="control-group"><button class="btn" onclick="app.adminCleanBadUsers()">Clean Junk Users</button><button class="btn" style="background:#ff4757; margin-top:10px" onclick="app.adminDeleteAllUsers()">Delete ALL Users</button></div><div id="adm-users-list"></div></div><div id="adm-tab-banned" style="display:none;"><div id="adm-banned-list"></div></div></div></div>
+        <div id="auth-modal" class="overlay"><div style="background:#222; padding:30px; border-radius:15px; width:300px; text-align:center;"><h3>Admin Access</h3><input type="password" id="auth-pass" placeholder="khalatsrhbh" style="text-align:center; padding:10px; border-radius:5px; border:none; width:100%; margin:10px 0;"><button class="btn" onclick="app.checkAdmin()">Login</button><button class="btn" style="background:transparent; color:#aaa; border:1px solid #555" onclick="document.getElementById('auth-modal').style.display='none'">Cancel</button></div></div>
+    </div>
+
+    <!-- Hidden Input for In-App Change -->
+    <input type="file" id="app-avatar-change" style="display:none;" accept="image/*" onchange="app.handleAvatarUpload(this, true)">
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyDwDXALRMwOitKbXHmvc3RSj4OvyOsaEbk",
+          authDomain: "kurdsportfinal.firebaseapp.com",
+          databaseURL: "https://kurdsportfinal-default-rtdb.firebaseio.com",
+          projectId: "kurdsportfinal",
+          storageBucket: "kurdsportfinal.firebasestorage.app",
+          messagingSenderId: "987501755132",
+          appId: "1:987501755132:web:0d2ea23c71e3b73d183579"
+        };
+        firebase.initializeApp(firebaseConfig); 
+        const dbRef = firebase.database().ref();
+
+        const GEMINI_API_KEY = "AIzaSyBswJ6MPwzAp7zNc0x7r_alwEHKF5NtuXo";
+        const GEMINI_MODEL = "gemini-pro-latest";
+
+        const TEAMS = { 'zakho': 'زاخۆ', 'duhok': 'دهۆک', 'erbil': 'هەولێر', 'newroz': 'نەورۆز', 'nasha': 'ناشا', 'shabab': 'شەباب', 'rdef': 'ردیف', 'harem': 'هەرێم' };
+        let currentUser = null; 
+        let currentRoom = null, selectedMsg = null, replyData = null, myFriends = {}, isAdminLoggedIn = false, rollingInterval = null, matchTimerInterval = null;
+        let isEditing = false;
+        let editMsgKey = null;
+        let teamRanks = {};
+        let teamStats = {};
+        let unreadFromFriends = {};
+        let selectedAvatarUrl = null; 
+        let friendRequests = {}; 
+        let friendListeners = {}; 
+
+        function getDeviceId() {
+            if (window.device && window.device.uuid) return window.device.uuid;
+            try {
+                let did = localStorage.getItem('ks_device_id');
+                if(!did) { did = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36); localStorage.setItem('ks_device_id', did); }
+                return did;
+            } catch (e) { return 'dev_temp_' + Date.now(); }
+        }
+
+        const confetti = { start: () => { const canvas = document.getElementById('confetti'); const ctx = canvas.getContext('2d'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const pieces = []; const colors = ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f', 'gold', 'white']; for(let i=0; i<300; i++) { pieces.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height-canvas.height, color: colors[Math.floor(Math.random()*colors.length)], size: Math.random()*10+5, speed: Math.random()*5+2, angle: Math.random()*360}); } function draw() { ctx.clearRect(0,0,canvas.width,canvas.height); pieces.forEach(p => { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle*Math.PI/180); ctx.fillStyle=p.color; ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size); ctx.restore(); p.y+=p.speed; p.angle+=2; if(p.y>canvas.height) p.y=-20; }); if(document.getElementById('giveaway-overlay').style.display==='flex') requestAnimationFrame(draw); else ctx.clearRect(0,0,canvas.width,canvas.height); } draw(); } };
+
+        const ui = {
+            showApp: () => { 
+                document.getElementById('splash-screen').style.display = 'none'; 
+                document.getElementById('login-screen').style.display = 'none'; 
+                document.getElementById('app-container').style.display = 'flex'; 
+                if(currentUser && currentUser.avatar) { 
+                    document.getElementById('profile-img').src = currentUser.avatar; 
+                    document.getElementById('profile-name').innerText = currentUser.name; 
+                    document.getElementById('profile-bio').innerText = currentUser.bio || "No Bio"; 
+
+                    // CHECK IF USER IS 'Admin'
+                    if (currentUser.name === 'HMHsrhbhKHALAT') {
+                        document.getElementById('admin-btn').style.display = 'block';
+                    } else {
+                        document.getElementById('admin-btn').style.display = 'none';
+                    }
+                } 
+            },
+            
+            showLogin: () => { document.getElementById('splash-screen').style.display = 'none'; document.getElementById('app-container').style.display = 'none'; document.getElementById('login-screen').style.display = 'flex'; },
+            toggleSidebar: (show) => { const sb = document.getElementById('sidebar'); const overlay = document.getElementById('sidebar-overlay'); if(show) { sb.classList.add('active'); overlay.style.display = 'block'; } else { sb.classList.remove('active'); overlay.style.display = 'none'; } },
+            
+            // --- FIX START: CROWN AT THE END + COLORFUL RANKS ---
+            renderSidebarTeams: () => { 
+                const list = document.getElementById('team-list'); list.innerHTML = ''; 
+                
+                // Sort TEAMS based on counts (Top to Bottom)
+                const sortedKeys = Object.keys(TEAMS).sort((a,b) => (teamStats[b]||0) - (teamStats[a]||0));
+
+                sortedKeys.forEach((key, index) => { 
+                    const rank = index + 1;
+                    const isActive = currentRoom === key ? 'active' : '';
+                    const count = teamStats[key] || 0;
+                    
+                    let badge = '';
+                    let rankClass = `t-rank-${rank}`; // For CSS coloring (blue, red, etc)
+
+                    if(rank === 1) {
+                        badge = '<i class="fas fa-crown rank-badge rank-1-icon"></i>'; 
+                    } else if(rank === 2) {
+                        badge = '<i class="fas fa-medal rank-badge rank-2-icon"></i>'; 
+                    } else if(rank === 3) {
+                        badge = '<i class="fas fa-medal rank-badge rank-3-icon"></i>'; 
+                    } else {
+                        // Colorful Numbers for 4, 5, 6...
+                        badge = `<span class="rank-number">${rank}</span>`;
+                    }
+
+                    const myTeamIcon = key === currentUser.team ? '<i class="fas fa-star" style="color:gold; font-size:0.7rem;"></i>' : '';
+                    
+                    // SWAPPED ORDER: Name First, Then Badge (Crown)
+                    list.innerHTML += `
+                        <div class="nav-item ${isActive} t-${key} ${rankClass}" onclick="app.switchRoom('${key}', '${TEAMS[key]}')">
+                            <div style="display:flex; align-items:center;">
+                                <span style="font-weight:bold; font-size:1rem; margin-left:5px;">${TEAMS[key]}</span>
+                                ${badge}
+                            </div>
+                            <div>
+                                <small style="color:#64748b; font-size:0.75rem; margin-left:5px;">(${count})</small>
+                                ${myTeamIcon}
+                            </div>
+                        </div>`; 
+                }); 
+            },
+            // --- FIX END ---
+
+            renderFriends: () => { 
+                const list = document.getElementById('friend-list'); list.innerHTML = ''; 
+                Object.values(friendListeners).forEach(ref => ref.off()); friendListeners = {};
+                if(!myFriends) return;
+                let friendsArr = []; Object.keys(myFriends).forEach(name => { friendsArr.push({name: name, unread: unreadFromFriends[name] || 0}); });
+                friendsArr.sort((a,b) => b.unread - a.unread);
+                let totalUnread = 0;
+                friendsArr.forEach(f => {
+                    totalUnread += f.unread;
+                    const itemId = `friend-item-${f.name}`;
+                    let badgeHtml = f.unread > 0 ? `<span class="notif-badge" style="display:inline-block; margin-right:5px;">${f.unread}</span>` : '';
+                    list.innerHTML += `<div id="${itemId}" class="nav-item" onclick="app.startPrivateChat('${f.name}')"><span>${badgeHtml} ${f.name}</span><div style="display:flex;align-items:center;gap:5px;"><span style="color:var(--gold);font-size:0.7rem;">✔️</span><span class="status-indicator" style="width:10px; height:10px; border-radius:50%; background:#777; display:inline-block;"></span></div></div>`;
+                    const ref = dbRef.child('users/' + f.name); friendListeners[f.name] = ref; 
+                    ref.on('value', s => { const el = document.getElementById(itemId); if (!el) return; if(s.exists()){ const u = s.val(); const statusColor = u.online ? '#2ed573' : '#777'; const ind = el.querySelector('.status-indicator'); if(ind) ind.style.background = statusColor; } else { el.style.opacity = '0.5'; el.querySelector('span').innerText = f.name + " (Deleted)"; } });
+                });
+                const mainBadge = document.getElementById('friend-total-badge'); if(totalUnread > 0) { mainBadge.style.display = 'inline-block'; mainBadge.innerText = totalUnread; } else { mainBadge.style.display = 'none'; }
+            },
+            renderUsersList: (users) => { 
+                const list = document.getElementById('all-users-list'); 
+                list.innerHTML = ''; 
+                if(!users) { list.innerHTML = '<div style="text-align:center; color:#777;">هیچ بەکارهێنەر نەهاتنە دیتن</div>'; return; }
+                
+                Object.entries(users).forEach(([key, user]) => { 
+                    if(key === currentUser.name) return; // ناڤێ خۆ نیشان نادەت
+                    if(user.name === 'HMHsrhbhKHALAT') return; // *** ل ڤێرە ناڤێ ئەدمینی ژ لیستی ڤەدشێریت ***
+
+                    const isFriend = myFriends && myFriends[user.name]; 
+                    const actionIcon = isFriend ? '<i class="fas fa-check" style="color:var(--gold);"></i>' : '<button class="small-btn" onclick="event.stopPropagation(); app.sendFriendRequest(\'' + user.name + '\')">➕</button>'; 
+                    const statusClass = user.online ? 'online' : ''; 
+                    const safeAvatar = user.avatar || "https://cdn-icons-png.flaticon.com/512/847/847969.png"; 
+                    
+                    list.innerHTML += `<div class="user-row" onclick="app.openActionMenu('user_list', '${user.name}', '')"><div style="position:relative;"><img src="${safeAvatar}"><div class="status-dot ${statusClass}" style="position:absolute; bottom:0; right:0; border:2px solid #121212;"></div></div><div style="flex:1;"><div style="color:var(--text-main); font-weight:bold;">${user.name}</div><div style="color:var(--text-sub); font-size:0.8rem;">${TEAMS[user.team] || 'No Team'}</div></div> ${actionIcon} <button class="icon-btn" onclick="event.stopPropagation(); app.startPrivateChat('${user.name}')">💬</button></div>`; 
+                }); 
+            },
+            renderRequests: () => { const list = document.getElementById('requests-list'); const badge = document.getElementById('req-badge'); list.innerHTML = ''; const reqKeys = Object.keys(friendRequests); if(reqKeys.length > 0) { badge.innerText = reqKeys.length; badge.style.display = 'inline-block'; reqKeys.forEach(fromUser => { list.innerHTML += `<div class="req-item"><span style="font-weight:bold; color:var(--text-main);">${fromUser}</span><div style="display:flex; gap:5px;"><button class="small-btn" style="background:#2ed573; color:black;" onclick="app.acceptRequest('${fromUser}')">بەلێ</button><button class="small-btn" style="background:#ff4757; color:white;" onclick="app.rejectRequest('${fromUser}')">نەخێر</button></div></div>`; }); } else { badge.style.display = 'none'; list.innerHTML = '<div style="color:#777;">هیچ داخواز نینن</div>'; } },
+            renderCompanies: (comps) => { const bar = document.getElementById('sponsors-bar'); const admList = document.getElementById('adm-comp-list'); if(!comps) { bar.style.display = 'none'; if(admList) admList.innerHTML = '<div style="color:#777; text-align:center;">No Companies</div>'; return; } bar.style.display = 'flex'; bar.innerHTML = ''; if(admList) admList.innerHTML = ''; Object.entries(comps).forEach(([key, c]) => { bar.innerHTML += `<a href="tel:${c.phone}" style="text-decoration:none;"><div class="sponsor-card"><img src="${c.logo}" class="sponsor-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'"><div class="sponsor-name">${c.name}</div><div class="sponsor-phone"><i class="fas fa-phone-alt"></i> ${c.phone}</div></div></a>`; if(admList) admList.innerHTML += `<div class="gift-item"><div style="display:flex; align-items:center; gap:10px;"><img src="${c.logo}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;"><div><div style="font-weight:bold;">${c.name}</div><div style="font-size:0.8rem; color:#aaa;">${c.phone}</div></div></div><button class="btn" style="background:#ff4757; width:auto; padding:5px 15px;" onclick="dbRef.child('system/companies/${key}').remove()">Del 🗑️</button></div>`; }); },
+            
+            // --- FIX START HERE (UPDATED RENDER MESSAGE) ---
+            renderMessage: (key, msg) => { 
+                const list = document.getElementById('messages-list'); 
+                const isMe = msg.sender === currentUser.name; 
+                const typeClass = isMe ? 'sent' : 'received'; 
+                const senderName = isMe ? 'You' : msg.sender; 
+                let ticks = isMe ? (msg.seen ? '<span class="ticks seen">✓✓</span>' : '<span class="ticks sent">✓</span>') : ''; 
+                
+                let replyHTML = '';
+                if (msg.reply) {
+                     replyHTML = `<div class="reply-preview-bar"><div style="font-size:0.7rem; color:var(--gold);">بەرسڤ بۆ: ${msg.reply.sender}</div><div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${msg.reply.text}</div></div>`;
+                }
+                
+                const heartHTML = msg.heart ? '<div class="reaction-heart">❤️</div>' : ''; 
+                const avatarSrc = msg.avatar || "https://cdn-icons-png.flaticon.com/512/847/847969.png"; 
+                
+                // IMPORTANT FIX: Added class="msg-content-text"
+                let contentHtml = msg.isSticker ? `<img src="${msg.text}" class="msg-sticker">` : `<div class="msg-content-text">${msg.text}</div>`; 
+                
+                // Safe text for onclick to prevent breaking if text has quotes
+                const safeText = msg.text.replace(/'/g, "\\'");
+                const html = `<div class="msg-row ${typeClass}" id="${key}">${!isMe ? `<img src="${avatarSrc}" class="msg-avatar" onclick="app.viewImage('${avatarSrc}')">` : ''}<div class="msg ${typeClass}" onclick="app.openActionMenu('${key}', '${msg.sender}', '${msg.isSticker ? 'Sticker' : safeText}')"><span class="msg-sender">${senderName}</span>${replyHTML}${contentHtml}<div class="msg-time">${msg.time} ${ticks}</div>${heartHTML}</div></div>`; 
+                
+                list.insertAdjacentHTML('beforeend', html); 
+                if(list.children.length > 55) { list.removeChild(list.firstElementChild); }
+                const scrollArea = document.getElementById('main-scroll');
+                scrollArea.scrollTop = scrollArea.scrollHeight; 
+                if(!isMe && !msg.seen) dbRef.child('messages/' + currentRoom + '/' + key).update({seen: true}); 
+            },
+
+            // --- FIX PART 2 (UPDATED UPDATE MESSAGE) ---
+            updateMessage: (key, msg) => { 
+                const el = document.getElementById(key); 
+                if(!el) return; 
+                
+                // IMPORTANT FIX: Targeting specific class to avoid selecting reply div
+                const msgContent = el.querySelector('.msg-content-text'); 
+                
+                if (msgContent && !msg.isSticker) msgContent.innerText = msg.text; 
+                if(msg.heart && !el.querySelector('.reaction-heart')) el.querySelector('.msg').insertAdjacentHTML('beforeend', '<div class="reaction-heart">❤️</div>'); 
+                if(msg.seen && msg.sender === currentUser.name) { 
+                    const tickEl = el.querySelector('.ticks'); 
+                    if(tickEl) { tickEl.innerHTML = '✓✓'; tickEl.classList.add('seen'); tickEl.classList.remove('sent'); } 
+                } 
+            },
+            // --- END OF FIX ---
+
+            renderLiveCard: (val) => { const card = document.getElementById('live-match-placeholder'); if(!val || !val.active) { card.innerHTML = ''; card.style.display = 'none'; if(matchTimerInterval) { clearInterval(matchTimerInterval); matchTimerInterval = null; } return; } card.style.display = 'block'; let displayTime = "00:00"; if(val.timerStatus === 'live') { const diff = Math.floor((Date.now() - val.timerStartTime) / 1000) + (val.elapsedTime || 0); const mins = Math.floor(diff / 60).toString().padStart(2, '0'); const secs = (diff % 60).toString().padStart(2, '0'); displayTime = `${mins}:${secs}`; if(!matchTimerInterval) matchTimerInterval = setInterval(() => { const d = Math.floor((Date.now() - val.timerStartTime) / 1000) + (val.elapsedTime || 0); document.getElementById('live-timer-disp').innerText = `${Math.floor(d / 60).toString().padStart(2, '0')}:${(d % 60).toString().padStart(2, '0')}`; }, 1000); } else { displayTime = `${Math.floor((val.elapsedTime || 0) / 60).toString().padStart(2, '0')}:${((val.elapsedTime || 0) % 60).toString().padStart(2, '0')}`; if(matchTimerInterval) { clearInterval(matchTimerInterval); matchTimerInterval = null; } } const statusText = val.timerStatus === 'live' ? '🔴 LIVE' : '⏸ PAUSED'; const badgeColor = val.timerStatus === 'live' ? 'var(--live-color)' : '#7f8c8d'; let scoreClass = 'live-score-container'; if(val.lastGoalTime && (Date.now() - val.lastGoalTime < 5000)) { scoreClass += ' goal-flash'; } card.innerHTML = `<div class="live-match-card"><div class="live-header"><span class="live-badge" style="background:${badgeColor}">${statusText}</span><span class="live-timer" id="live-timer-disp">${displayTime}</span></div><div class="live-content"><div class="team-box">${val.t1}</div><div class="${scoreClass}">${val.s1} - ${val.s2}</div><div class="team-box">${val.t2}</div></div>${scoreClass.includes('goal-flash') ? '<div style="text-align:center; color:gold; font-weight:bold; margin-top:5px; animation:popIn 0.5s;">⚽ GOAL! ⚽</div>' : ''}</div>`; },
+            renderLinks: (links) => { const box = document.getElementById('links-placeholder'); box.innerHTML = ''; if(links) Object.values(links).forEach(l => { box.innerHTML += `<div class="link-btn" onclick="window.open('${l.url}', '_blank')"><span>${l.title}</span><i class="fas fa-external-link-alt"></i></div>`; }); },
+            
+            // THE "ECONOMIC" GIVEAWAY FIX + WINNER ALERT
+            handleGiveaway: (gw) => { 
+                const overlay = document.getElementById('giveaway-overlay'), 
+                      prizeDisplay = document.getElementById('gw-prize-display'), 
+                      stageArea = document.getElementById('gw-stage-area'); 
+                
+                if(!gw || !gw.active || !currentUser) { 
+                    overlay.style.display = 'none'; 
+                    if(rollingInterval) { clearInterval(rollingInterval); rollingInterval = null; } 
+                    return; 
+                } 
+                
+                overlay.style.display = 'flex'; 
+                prizeDisplay.innerText = gw.prize; 
+                
+                const btn = document.getElementById('admin-gw-close'); 
+                if(isAdminLoggedIn) btn.style.display = 'block'; else btn.style.display = 'none'; 
+                
+                const now = Date.now(); 
+                
+                // Qonaxa 1: Hemişmartin
+                if(now < gw.stage1End) { 
+                    stageArea.innerHTML = `<div class="gw-timer">${Math.ceil((gw.stage1End - now)/1000)}</div><div style="font-size:0.8rem; margin-top:10px;">خۆ ئامادە بکە...</div>`; 
+                    if(rollingInterval) { clearInterval(rollingInterval); rollingInterval = null; } 
+                } 
+                // Qonaxa 2: Zivrandin (Rolling) - SVK Û BÊ MESREF
+                else if (now < gw.stage2End) { 
+                    if(!rollingInterval) { 
+                        dbRef.child('users').orderByChild('clicks').startAt(10).limitToLast(30).once('value', s => { 
+                            const allNames = []; 
+                            s.forEach(u => { allNames.push(u.val().name); });
+                            
+                            if(gw.winner && !allNames.includes(gw.winner)) { allNames.push(gw.winner); }
+                            if(allNames.length < 5) { allNames.push("Hanas", "Zina", "Kurd", "Sport", "User"); }
+
+                            rollingInterval = setInterval(() => { 
+                                const randName = allNames[Math.floor(Math.random() * allNames.length)];
+                                stageArea.innerHTML = `<div class="gw-rolling">${randName}</div>`; 
+                                document.getElementById('tick-sound').play().catch(()=>{}); 
+                            }, 100); 
+                        }); 
+                    } 
+                } 
+                // Qonaxa 3: Serkeftî
+                else if (now < gw.stage3End) { 
+                    if(rollingInterval) { clearInterval(rollingInterval); rollingInterval = null; } 
+                    stageArea.innerHTML = `<div style="font-size:1rem; color:#aaa; margin-bottom:10px;">سەرکەفتی پیرۆزە:</div><div class="gw-winner">${gw.winner}</div>`; 
+                    if(!window.winSoundPlayed) { 
+                        document.getElementById('win-sound').play().catch(()=>{}); 
+                        confetti.start(); 
+                        window.winSoundPlayed = true; 
+                        // FEATURE: ALERT BO KESÊ BRAWE (Winner Message)
+                        if(currentUser.name === gw.winner) {
+                            alert("🎉 پیرۆزە! تە خەلاتێ " + gw.prize + " برد! 🎁");
+                        }
+                    } 
+                } else {
+                    window.winSoundPlayed = false; 
+                }
+            },
+            
+            switchAdminTab: (tabName) => { ['live', 'gifts', 'links', 'users', 'companies', 'banned'].forEach(t => { const el = document.getElementById('adm-tab-'+t); if(el) el.style.display = 'none'; }); document.getElementById('adm-tab-'+tabName).style.display = 'block'; document.querySelectorAll('.adm-tab').forEach(t => t.classList.remove('active')); event.target.classList.add('active'); },
+            toggleAdminPanel: (show) => { document.getElementById('admin-panel').style.display = show ? 'flex' : 'none'; if(show) app.loadAdminData(); },
+            viewImage: (src) => { document.getElementById('img-viewer').style.display = 'flex'; document.getElementById('img-full').src = src; }
+        };
+
+        const app = {
+            init: () => { 
+                const onDeviceReady = () => {
+                    const myDeviceId = getDeviceId();
+                    dbRef.child('system/banned_devices/' + myDeviceId).once('value', banSnap => {
+                        if(banSnap.exists()) { alert("🔴 BANNED 🔴"); document.getElementById('splash-screen').innerHTML = "<h2 style='color:red'>BANNED</h2>"; return; }
+                        dbRef.child('users').orderByChild('deviceId').equalTo(myDeviceId).once('value', snapshot => {
+                            if(snapshot.exists()) {
+                                const userData = Object.values(snapshot.val())[0];
+                                currentUser = userData;
+                                dbRef.child('users/' + currentUser.name).update({online: true, lastLogin: Date.now()}).then(() => { 
+                                    ui.showApp(); app.showAd(); app.startListeners(); app.switchRoom(currentUser.team, TEAMS[currentUser.team]); 
+                                    app.listenForNotifications(); app.updateClickUI(); 
+                                    dbRef.child('users/' + currentUser.name).onDisconnect().update({online: false});
+                                });
+                            } else { ui.showLogin(); }
+                        });
+                    });
+                };
+                if (window.cordova) document.addEventListener('deviceready', onDeviceReady, false); else onDeviceReady();
+            },
+
+            isValidName: (name) => { const regex = /^[a-zA-Z0-9\u00C0-\u017F\u0600-\u06FF\s_]+$/; return regex.test(name); },
+            selectAvatar: (url, el) => { selectedAvatarUrl = url; document.querySelectorAll('.avatar-option').forEach(img => img.classList.remove('selected')); el.classList.add('selected'); document.getElementById('avatar-upload').value = ""; },
+            handleAvatarUpload: (input, isUpdate = false) => {
+                const file = input.files[0]; if (!file) return;
+                if (isUpdate && currentUser) {
+                    const now = Date.now(); const lastChange = currentUser.lastAvatarChange || 0; const daysPassed = (now - lastChange) / (1000 * 60 * 60 * 24);
+                    if (daysPassed < 15) { alert(`بورە، تو نەشێی وێنەی بگوهۆڕی هەتا ${Math.ceil(15 - daysPassed)} ڕۆژێن دی.`); input.value = ""; return; }
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image(); img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                        const MAX_WIDTH = 100; const scaleSize = MAX_WIDTH / img.width; canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height); const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                        if (dataUrl.length > 20000) { alert("وێنە گەلەک مەزنە. هیڤیە وێنەکێ بچیکتر هەلبژێرە."); return; }
+                        if (isUpdate) { dbRef.child('users/' + currentUser.name).update({ avatar: dataUrl, lastAvatarChange: Date.now() }); currentUser.avatar = dataUrl; document.getElementById('profile-img').src = dataUrl; app.showToast("سیستەم", "وێنە هاتە گوهۆڕین 🖼️"); } else { selectedAvatarUrl = dataUrl; document.querySelectorAll('.avatar-option').forEach(img => img.classList.remove('selected')); alert("وێنە هاتە هەلبژارتن!"); }
+                    }
+                }
+                reader.readAsDataURL(file);
+            },
+            promptChangeAvatar: () => { document.getElementById('app-avatar-change').click(); },
+            renameUser: () => { 
+                const now = Date.now(); const lastRenamed = currentUser.lastRenamed || 0; const oneDay = 24 * 60 * 60 * 1000;
+                if (now - lastRenamed < oneDay) { alert(`بورە! تو دڤێت ${Math.ceil((oneDay - (now - lastRenamed)) / (1000 * 60 * 60))} دەمژمێرێن دی بوەستی.`); return; }
+                const newName = prompt("ناڤێ نوی بنڤیسە (بێی ئیمۆجی):"); 
+                if(!newName || !app.isValidName(newName)) { alert("⚠️ بورە، ناڤ نابیت ئیمۆجی یان هێما (Symbol) تێدابن."); return; }
+                const safe = newName.replace(/[.#$/[\]]/g, ""); 
+                if(confirm("پشتڕاستی؟ (ناڤ دێ ئێتە گوهۆڕین)")) { 
+                    dbRef.child('users/' + safe).once('value', s => {
+                        if(s.exists()) { alert("ئەڤ ناڤە یێ هەی!"); } else { dbRef.child('users/'+safe).set({...currentUser, name: safe, lastRenamed: now}).then(()=>{ dbRef.child('users/'+currentUser.name).remove(); currentUser.name = safe; document.getElementById('profile-name').innerText = safe; location.reload(); }); }
+                    });
+                } 
+            },
+            toggleAiBot: () => { const menu = document.getElementById('ai-bot-menu'); if (menu.style.display === 'flex') { menu.style.display = 'none'; } else { menu.style.display = 'flex'; document.getElementById('ai-input-text').focus(); } },
+            
+            // --- NEW PROMPT LOGIC ---
+            askAiToFix: async () => {
+                const text = document.getElementById('ai-input-text').value; const resultBox = document.getElementById('ai-result-display'); const loadingText = document.getElementById('ai-loading-text'); const robotContainer = document.getElementById('robo-face');
+                if (!text.trim()) { alert("تکایە تشتەکێ بنڤیسە!"); return; }
+                loadingText.innerText = "⏳ چاوەڕێبە..."; robotContainer.classList.add('robot-talking'); resultBox.style.display = "none";
+                
+                // --- MODIFIED PROMPT TO BE STRICTER ---
+                const prompt = `Act as a strict Kurdish Badini spell checker. Fix the grammar and spelling of this text: "${text}". Output ONLY the fixed text. Do not add any explanations, quotes, or extra words. Do not make it longer.`;
+                
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+                    const data = await response.json(); const finalHash = data.candidates[0].content.parts[0].text;
+                    resultBox.innerText = finalHash; resultBox.style.display = "block";
+                } catch (error) { alert("خەلەتی: " + error.message); } finally { loadingText.innerText = "✨ ڕاستڤەکە"; robotContainer.classList.remove('robot-talking'); }
+            },
+            
+            useAiResult: () => { const resultBox = document.getElementById('ai-result-display'); if (resultBox.innerText) { document.getElementById('msg-input').value = resultBox.innerText; document.getElementById('ai-bot-menu').style.display = 'none'; document.getElementById('ai-input-text').value = ''; resultBox.style.display = 'none'; } },
+            clickChallenge: () => { let clicks = currentUser.clicks || 0; if(clicks < 10) { clicks++; currentUser.clicks = clicks; dbRef.child('users/' + currentUser.name).update({clicks: clicks}); app.updateClickUI(); if (clicks === 10) { setTimeout(() => { app.showAd(); }, 500); } } },
+            updateClickUI: () => { const clicks = currentUser.clicks || 0; const btn = document.getElementById('golden-btn'); const countSpan = document.getElementById('click-count'); if(clicks >= 10) { btn.classList.add('completed'); countSpan.innerText = "ئامادەی"; } else { btn.classList.remove('completed'); countSpan.innerText = clicks + "/10"; } },
+            resetGiveawayRound: () => { if(confirm("Reset Game?")) { dbRef.child('users').once('value', s => { s.forEach(u => { dbRef.child('users/' + u.key).update({clicks: 0}); }); }); alert("Game Reset!"); } },
+            showAd: () => { const overlay = document.getElementById('ad-overlay'); const timerEl = document.getElementById('ad-timer'); const closeBtn = document.getElementById('ad-close-btn'); overlay.style.display = 'flex'; let timeLeft = 5; timerEl.innerText = timeLeft; closeBtn.style.display = 'none'; timerEl.style.display = 'block'; const adInterval = setInterval(() => { timeLeft--; if(timeLeft > 0) { timerEl.innerText = timeLeft; } else { clearInterval(adInterval); timerEl.style.display = 'none'; closeBtn.style.display = 'block'; } }, 1000); },
+            closeAd: () => { document.getElementById('ad-overlay').style.display = 'none'; },
+            
+            login: () => { 
+                const nameInput = document.getElementById('login-name').value.trim(); 
+                const team = document.getElementById('login-team').value; 
+                
+                if (!selectedAvatarUrl) { alert('هیڤیە وێنەکێ هەلبژێرە!'); return; } 
+                if (!nameInput || nameInput.length < 2) { alert('هیڤیە ناڤێ خۆ بنڤیسە!'); return; } 
+                if (!app.isValidName(nameInput)) { alert("⚠️ بورە، ناڤ نابیت ئیمۆجی یان هێما (Symbol) تێدابن."); return; }
+
+                // --- پاراستنا ناڤێ Admin ---
+                if (nameInput === 'HMHsrhbhKHALAT') {
+                    const pass = prompt("تکایە پەیڤا نهێنی (Password) بۆ ئەدمینی بنڤیسە:");
+                    if (pass !== 'khalatitsrhbh') { // لڤێرە پاسووردێ خۆ دانی
+                        alert("❌ پاسوورد خەلەتە! تۆ نەشێی ب ناڤێ Admin بچیە ژوور.");
+                        return;
+                    }
+                }
+                // ---------------------------
+
+                document.getElementById('login-btn').style.display = 'none'; 
+                document.getElementById('login-loader').style.display = 'block'; 
+                
+                const safeName = nameInput.replace(/[.#$/[\]]/g, ""); 
+                const myDeviceId = getDeviceId(); 
+                
+                dbRef.child('system/banned_devices/' + myDeviceId).once('value', banSnap => { 
+                    if(banSnap.exists()) { alert("🔴 BANNED 🔴"); return; } 
+                    dbRef.child('users/' + safeName).once('value', snapshot => { 
+                        const existingUser = snapshot.val(); 
+                        if(existingUser) { 
+                            if (existingUser.deviceId === myDeviceId || existingUser.name === 'HMHsrhbhKHALAT') { 
+                                currentUser = existingUser; 
+                                dbRef.child('users/' + safeName).update({online: true, team: team, avatar: selectedAvatarUrl}).then(() => { 
+                                    ui.showApp(); 
+                                    app.showAd(); 
+                                    app.startListeners(); 
+                                    app.switchRoom(team, TEAMS[team]); 
+                                    app.listenForNotifications(); 
+                                    app.updateClickUI(); 
+                                    dbRef.child('users/' + currentUser.name).onDisconnect().update({online: false}); 
+                                }); 
+                            } else { 
+                                alert("بورە! ئەڤ ناڤە یێ هاتیە گرتن."); 
+                                document.getElementById('login-btn').style.display = 'block'; 
+                                document.getElementById('login-loader').style.display = 'none'; 
+                            } 
+                        } else { 
+                            dbRef.child('users').orderByChild('deviceId').equalTo(myDeviceId).once('value', deviceSnap => { 
+                                if(deviceSnap.exists()) { 
+                                    const oldUserData = Object.values(deviceSnap.val())[0]; 
+                                    // ئەگەر ئەدمین بیت، ڕێکێ بدێ بلا ناڤێ خۆ بگوهۆڕیت بۆ Admin
+                                    if(nameInput === 'Admin') {
+                                         const userObj = { name: safeName, team: team, avatar: selectedAvatarUrl, online: true, bio: "Admin Account", deviceId: myDeviceId, clicks: 0, lastAvatarChange: 0, lastRenamed: 0 }; 
+                                         currentUser = userObj; 
+                                         dbRef.child('users/' + safeName).update(userObj).then(() => { 
+                                             dbRef.child('users/' + safeName).onDisconnect().update({online: false}); 
+                                             ui.showApp(); app.showAd(); app.startListeners(); app.switchRoom(team, TEAMS[team]); app.listenForNotifications(); app.updateClickUI(); 
+                                         });
+                                    } else {
+                                        alert("بورە! تە بەرێ ئەکاونتەک هەیە ب ناڤێ: " + oldUserData.name); 
+                                        document.getElementById('login-name').value = oldUserData.name; 
+                                        document.getElementById('login-btn').style.display = 'block'; 
+                                        document.getElementById('login-loader').style.display = 'none'; 
+                                    }
+                                } else { 
+                                    const userObj = { name: safeName, team: team, avatar: selectedAvatarUrl, online: true, bio: "No Bio", deviceId: myDeviceId, clicks: 0, lastAvatarChange: 0, lastRenamed: 0 }; 
+                                    currentUser = userObj; 
+                                    dbRef.child('users/' + safeName).update(userObj).then(() => { 
+                                        dbRef.child('users/' + safeName).onDisconnect().update({online: false}); 
+                                        ui.showApp(); app.showAd(); app.startListeners(); app.switchRoom(team, TEAMS[team]); app.listenForNotifications(); app.updateClickUI(); 
+                                    }); 
+                                } 
+                            }); 
+                        } 
+                    }); 
+                }); 
+            },
+
+            editBio: () => { const b = prompt("بایۆ:", currentUser.bio || ""); if(b) { currentUser.bio = b; document.getElementById('profile-bio').innerText = b; dbRef.child('users/' + currentUser.name).update({ bio: b }); } },
+            logout: () => { if(currentUser) dbRef.child('users/' + currentUser.name).update({online: false}); location.reload(); },
+            startListeners: () => { if(currentUser) { dbRef.child('users/' + currentUser.name).on('value', snap => { const val = snap.val(); if(val) { currentUser.clicks = val.clicks || 0; if(val.bio) currentUser.bio = val.bio; if(val.lastAvatarChange) currentUser.lastAvatarChange = val.lastAvatarChange; if(val.lastRenamed) currentUser.lastRenamed = val.lastRenamed; app.updateClickUI(); } }); } dbRef.child('system/companies').on('value', s => { ui.renderCompanies(s.val()); }); dbRef.child('users/' + currentUser.name + '/friends').on('value', snap => { myFriends = snap.val() || {}; ui.renderFriends(); }); dbRef.child('users/' + currentUser.name + '/friend_requests').on('value', snap => { friendRequests = snap.val() || {}; ui.renderRequests(); }); dbRef.child('users/' + currentUser.name + '/blocked').on('value', snap => { if(currentUser) currentUser.blocked = snap.val() || {}; }); 
+                // --- UPDATE TEAM RANKING LOGIC ---
+                dbRef.child('system/stats/team_counts').on('value', snap => { 
+                    const stats = snap.val() || {}; 
+                    teamStats = stats; 
+                    ui.renderSidebarTeams(); // Re-render with new counts/ranks
+                }); 
+                // ---------------------------------
+                dbRef.child('system/live').on('value', snap => { const val = snap.val(); ui.renderLiveCard(val); if(val && document.getElementById('admin-panel').style.display === 'flex') { document.getElementById('adm-s1-disp').innerText = val.s1; document.getElementById('adm-s2-disp').innerText = val.s2; } }); dbRef.child('system/links').on('value', s => { ui.renderLinks(s.val()); }); dbRef.child('system/giveaway').on('value', snap => { const val = snap.val(); if(val && val.active) { if(!window.gwTimerInterval) window.gwTimerInterval = setInterval(() => { ui.handleGiveaway(val); if(Date.now() > val.stage3End) { document.getElementById('giveaway-overlay').style.display = 'none'; clearInterval(window.gwTimerInterval); window.gwTimerInterval = null; } }, 500); } else { ui.handleGiveaway(null); if(window.gwTimerInterval) { clearInterval(window.gwTimerInterval); window.gwTimerInterval = null; } } }); dbRef.child('system/banned_devices/' + getDeviceId()).on('value', s => { if(s.exists()) { alert("🔴 BANNED 🔴"); location.reload(); } }); dbRef.child('system/livestream').on('value', snap => { const val = snap.val(); const box = document.getElementById('floating-stream'); const content = document.getElementById('stream-content'); if(val && val.active) { box.style.display = 'block'; let fixedHtml = val.html.replace('<iframe', '<iframe webkit-allow-fullscreen playsinline'); content.innerHTML = fixedHtml; const iframe = content.querySelector('iframe'); if(iframe) { iframe.style.position = 'absolute'; iframe.style.top = '0'; iframe.style.left = '0'; iframe.style.width = '100%'; iframe.style.height = '100%'; } } else { box.style.display = 'none'; content.innerHTML = ""; } }); },
+            searchUser: () => { const term = document.getElementById('user-search').value.trim(); if(term.length < 1) return; dbRef.child('users').orderByChild('name').equalTo(term).once('value', snap => { ui.renderUsersList(snap.val()); }); },
+            listenForNotifications: () => { dbRef.child('users/' + currentUser.name + '/alerts/msg').off(); const now = Date.now(); dbRef.child('users/' + currentUser.name + '/alerts/msg').orderByChild('time').startAt(now).on('child_added', snap => { const data = snap.val(); if(data.from !== currentUser.name) { const roomCheck = 'private_' + [currentUser.name, data.from].sort().join('_'); if(currentRoom !== roomCheck) { if(!unreadFromFriends[data.from]) unreadFromFriends[data.from] = 0; unreadFromFriends[data.from]++; ui.renderFriends(); app.showToast("Message", data.from + ": " + data.text); } } }); dbRef.child('users/' + currentUser.name + '/alerts/friend_accept').orderByChild('time').startAt(now).on('child_added', snap => { const data = snap.val(); app.showToast("System", data.from + " داخوازا تە قەبیل کر ✔️"); }); },
+            toggleFriendList: () => { const c = document.getElementById('friend-list-container'); const a = document.getElementById('friend-arrow'); if(c.style.display === 'block'){ c.style.display = 'none'; a.className = 'fas fa-chevron-down'; } else { c.style.display = 'block'; a.className = 'fas fa-chevron-up'; } },
+            switchRoom: (roomKey, title) => { if(currentRoom && currentRoom !== 'results') dbRef.child('messages/' + currentRoom).off(); currentRoom = roomKey; document.getElementById('room-header-title').innerText = title; ui.toggleSidebar(false); app.cancelReply(); app.cancelEdit(); const msgList = document.getElementById('messages-list'); const liveCard = document.getElementById('live-match-placeholder'); const resultsView = document.getElementById('results-view'); const inputArea = document.getElementById('input-area'); const sponsorsBar = document.getElementById('sponsors-bar'); if(roomKey === 'results') { msgList.style.display = 'none'; liveCard.style.display = 'block'; resultsView.style.display = 'block'; inputArea.style.display = 'none'; sponsorsBar.style.display = 'flex'; } else { msgList.style.display = 'flex'; msgList.innerHTML = ''; resultsView.style.display = 'none'; if(roomKey.startsWith('private_')) { inputArea.style.display = 'flex'; liveCard.style.display = 'none'; sponsorsBar.style.display = 'none'; } else { liveCard.style.display = 'block'; sponsorsBar.style.display = 'flex'; if(roomKey === currentUser.team) { inputArea.style.display = 'flex'; } else { inputArea.style.display = 'none'; msgList.innerHTML = '<div style="text-align:center; color:#777; margin-top:20px;">تەنها خوێندن</div>'; } } dbRef.child('messages/' + roomKey).limitToLast(50).on('child_added', snap => { ui.renderMessage(snap.key, snap.val()); }); dbRef.child('messages/' + roomKey).limitToLast(50).on('child_changed', snap => { ui.updateMessage(snap.key, snap.val()); }); dbRef.child('messages/' + roomKey).limitToLast(50).on('child_removed', snap => { const el = document.getElementById(snap.key); if(el) el.remove(); }); } ui.renderSidebarTeams(); },
+            isBlocked: (otherUser) => { if(currentUser.blocked && currentUser.blocked[otherUser]) return true; if(currentUser.blocked_by && currentUser.blocked_by[otherUser]) return true; return false; },
+            
+            // --- 🛑🛑 COMPLETE SEND MESSAGE FIX 🛑🛑 ---
+            sendMessage: () => { 
+                const inputField = document.getElementById('msg-input'); // 1. Get element
+                const text = inputField.value.trim();
+                
+                if(!text) return; 
+
+                if (isEditing && editMsgKey) { 
+                    dbRef.child('messages/' + currentRoom + '/' + editMsgKey).update({ text: text }); 
+                    app.cancelEdit(); 
+                    // Prevent keyboard close on edit too
+                    inputField.value = '';
+                    inputField.focus(); 
+                    return; 
+                } 
+
+                if(currentRoom.startsWith('private_')) { 
+                    const parts = currentRoom.replace('private_', '').split('_'); 
+                    const receiver = parts[0] === currentUser.name ? parts[1] : parts[0]; 
+                    if(app.isBlocked(receiver)) { alert("Blocked!"); return; } 
+                    dbRef.child('users/' + receiver + '/alerts/msg').push({ from: currentUser.name, text: text, time: firebase.database.ServerValue.TIMESTAMP }); 
+                } else { 
+                    if(TEAMS[currentRoom]) dbRef.child('system/stats/team_counts/' + currentRoom).transaction(count => (count || 0) + 1); 
+                } 
+
+                const msgData = { 
+                    sender: currentUser.name, 
+                    avatar: currentUser.avatar, 
+                    text: text, 
+                    time: new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'}), 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                    reply: replyData ? replyData : null, 
+                    seen: false 
+                }; 
+                
+                dbRef.child('messages/' + currentRoom).push(msgData); 
+
+                // 2. Clear input and REFOCUS immediately to keep keyboard open
+                inputField.value = ''; 
+                inputField.focus();
+                
+                app.cancelReply(); 
+            },
+            // -----------------------------------------------------------
+
+            openActionMenu: (msgKey, sender, text) => { 
+                selectedMsg = { key: msgKey, sender: sender, text: text }; 
+                const menu = document.getElementById('action-menu'); menu.innerHTML = ''; 
+                const amIBlocked = (currentUser.blocked && currentUser.blocked[sender]); 
+                const removeFriendBtn = (myFriends && myFriends[sender]) ? `<div class="action-item" onclick="app.removeFriend('${sender}')"><div class="action-icon" style="color:#ff4757"><i class="fas fa-user-minus"></i></div><span>🗑️ ژێبرن</span></div>` : ''; 
+                if(msgKey === 'user_list') { menu.innerHTML += `<div class="action-item" onclick="app.startPrivateChat('${sender}')"><div class="action-icon" style="color:#feca57"><i class="fas fa-comment-dots"></i></div><span>نامە</span></div>${!myFriends[sender] ? `<div class="action-item" onclick="app.sendFriendRequest('${sender}')"><div class="action-icon" style="color:#1dd1a1"><i class="fas fa-user-plus"></i></div><span>هەڤال</span></div>` : ''}${removeFriendBtn}<div class="action-item" onclick="app.toggleBlock('${sender}')"><div class="action-icon" style="color:${amIBlocked?'#2ed573':'#ff4757'}"><i class="fas ${amIBlocked?'fa-unlock':'fa-ban'}"></i></div><span>${amIBlocked?'لادان':'بلۆک'}</span></div>`; } 
+                else { 
+                    const replyName = sender; menu.innerHTML += `<div class="action-item" onclick="app.setReply('${replyName}', '${text}')"><div class="action-icon" style="color:#48dbfb"><i class="fas fa-reply"></i></div><span>بەرسڤ</span></div><div class="action-item" onclick="app.addHeart('${msgKey}')"><div class="action-icon" style="color:#ff6b6b"><i class="fas fa-heart"></i></div><span>دڵ</span></div>`; 
+                    if(sender !== currentUser.name) { menu.innerHTML += `<div class="action-item" onclick="app.startPrivateChat('${sender}')"><div class="action-icon" style="color:#feca57"><i class="fas fa-comment-dots"></i></div><span>نامە</span></div>${!myFriends[sender] ? `<div class="action-item" onclick="app.sendFriendRequest('${sender}')"><div class="action-icon" style="color:#1dd1a1"><i class="fas fa-user-plus"></i></div><span>هەڤال</span></div>` : ''}${removeFriendBtn}`; } 
+                    else { if (!text.startsWith('http')) menu.innerHTML += `<div class="action-item" onclick="app.startEdit('${msgKey}', '${text}')"><div class="action-icon" style="color:#feca57"><i class="fas fa-pen"></i></div><span>Edit</span></div>`; menu.innerHTML += `<div class="action-item" onclick="app.deleteMessage('${msgKey}')"><div class="action-icon" style="color:#ff4757"><i class="fas fa-trash"></i></div><span>ژێبرن</span></div>`; } 
+                } 
+                document.getElementById('action-overlay').style.display='block'; setTimeout(() => menu.classList.add('active'), 10); 
+            },
+
+            removeFriend: (name) => { if(confirm("تو دڵنیای تە دڤێت ڤی هەڤالی ژێ ببەی؟")) { dbRef.child('users/' + currentUser.name + '/friends/' + name).remove(); dbRef.child('users/' + name + '/friends/' + currentUser.name).remove(); app.showToast("System", "هەڤال هاتە ژێبرن 🗑️"); app.closeActionMenu(); } },
+            startEdit: (key, text) => { isEditing = true; editMsgKey = key; document.getElementById('msg-input').value = text; document.getElementById('edit-ui').style.display = 'flex'; app.closeActionMenu(); },
+            cancelEdit: () => { isEditing = false; editMsgKey = null; document.getElementById('msg-input').value = ''; document.getElementById('edit-ui').style.display = 'none'; },
+            closeActionMenu: () => { document.getElementById('action-menu').classList.remove('active'); setTimeout(() => document.getElementById('action-overlay').style.display='none', 300); },
+            setReply: (sender, text) => { replyData = { sender: sender, text: text }; document.getElementById('reply-ui').style.display = 'flex'; document.getElementById('reply-to-name').innerText = sender; app.closeActionMenu(); },
+            cancelReply: () => { replyData = null; document.getElementById('reply-ui').style.display = 'none'; },
+            addHeart: (key) => { dbRef.child('messages/' + currentRoom + '/' + key).update({heart: true}); app.closeActionMenu(); },
+            deleteMessage: (key) => { if(confirm("Delete?")) dbRef.child('messages/' + currentRoom + '/' + key).remove(); app.closeActionMenu(); },
+            openRequestsPopup: () => { document.getElementById('requests-popup').style.display = 'flex'; },
+            sendFriendRequest: (name) => { if(myFriends[name]) { app.showToast("System", "Already friends!"); app.closeActionMenu(); return; } dbRef.child('users/' + name + '/friend_requests/' + currentUser.name).set(true); app.showToast("System", "داخواز هاتە هنارتن 📨"); app.closeActionMenu(); },
+            acceptRequest: (fromUser) => { dbRef.child('users/' + currentUser.name + '/friends/' + fromUser).set(true); dbRef.child('users/' + fromUser + '/friends/' + currentUser.name).set(true); dbRef.child('users/' + currentUser.name + '/friend_requests/' + fromUser).remove(); dbRef.child('users/' + fromUser + '/alerts/friend_accept').push({ from: currentUser.name, time: firebase.database.ServerValue.TIMESTAMP }); app.showToast("System", "هەڤالینی هاتە دروستکرن! 🎉"); ui.renderRequests(); },
+            rejectRequest: (fromUser) => { dbRef.child('users/' + currentUser.name + '/friend_requests/' + fromUser).remove(); app.showToast("System", "داخواز هاتە ڕەتکرن ❌"); ui.renderRequests(); },
+            toggleBlock: (name) => { if(currentUser.blocked && currentUser.blocked[name]) { dbRef.child('users/' + currentUser.name + '/blocked/' + name).remove(); alert("Unblocked"); } else { dbRef.child('users/' + currentUser.name + '/blocked/' + name).set(true); alert("Blocked"); } app.closeActionMenu(); },
+            startPrivateChat: (name) => { if(app.isBlocked(name)) { alert("Blocked!"); return; } if(unreadFromFriends[name]) { unreadFromFriends[name] = 0; ui.renderFriends(); } const names = [currentUser.name, name].sort(); app.switchRoom('private_' + names.join('_'), '🔒 ' + name); app.closeActionMenu(); document.getElementById('users-modal').style.display='none'; },
+            toggleAdminAuth: () => document.getElementById('auth-modal').style.display = 'flex',
+            checkAdmin: () => { if (document.getElementById('auth-pass').value === 'khalatitsrhbh') { isAdminLoggedIn = true; document.getElementById('auth-modal').style.display = 'none'; document.getElementById('admin-panel').style.display = 'flex'; app.loadAdminData(); } else alert('Wrong'); },
+            
+            // ADMIN DATA LOADING + HISTORY LISTENER
+            loadAdminData: () => { 
+                dbRef.child('system/live').once('value', s => { const l = s.val(); if(l){ document.getElementById('adm-t1').value=l.t1; document.getElementById('adm-t2').value=l.t2; document.getElementById('adm-s1-disp').innerText=l.s1; document.getElementById('adm-s2-disp').innerText=l.s2; } }); 
+                dbRef.child('system/gifts').on('value', s => { const gBox = document.getElementById('adm-gift-list'); gBox.innerHTML=''; const val = s.val(); if(val) Object.keys(val).forEach(k => { const g = val[k]; gBox.innerHTML += `<div class="gift-item"><span>🎁 ${g.name}</span> <div><button class="btn" style="padding:5px 10px; width:auto; background:var(--gold); color:black" onclick="app.startGiftSequence('${g.name}')">Start</button> <button class="btn" style="padding:5px 10px; width:auto; background:red;" onclick="dbRef.child('system/gifts/${k}').remove()">Del</button></div></div>`; }); }); 
+                // WINNER HISTORY LISTENER
+                dbRef.child('system/winner_history').limitToLast(50).on('value', s => { const hBox = document.getElementById('adm-winner-history'); hBox.innerHTML = ''; const val = s.val(); if(val) { Object.values(val).reverse().forEach(h => { hBox.innerHTML += `<div class="history-item"><div><strong>${h.winner}</strong><br><small style="color:#aaa">${h.prize}</small></div><div style="font-size:0.7rem; color:#777;">${new Date(h.time).toLocaleString()}</div></div>`; }); } else { hBox.innerHTML = '<div style="color:#777; text-align:center">No History</div>'; } });
+                
+                dbRef.child('system/links').on('value', s => { const lBox = document.getElementById('adm-links-list'); lBox.innerHTML=''; const val = s.val(); if(val) Object.keys(val).forEach(k => { const l = val[k]; lBox.innerHTML += `<div class="gift-item"><span>${l.title}</span> <button style="color:red; background:none; border:none" onclick="dbRef.child('system/links/${k}').remove()">X</button></div>`; }); }); 
+                dbRef.child('users').limitToLast(100).on('value', s => { const list = document.getElementById('adm-users-list'); list.innerHTML = ''; s.forEach(u => { const user = u.val(); if(user.name === 'Admin') return; list.innerHTML += `<div class="gift-item" style="display:flex; justify-content:space-between; align-items:center;"><div><div style="font-weight:bold">${user.name}</div><div style="font-size:0.7rem; color:#777;">${user.team}</div></div><div style="display:flex; gap:5px;"><button class="small-btn" style="background:#ff4757; border:none;" onclick="app.adminDeleteUser('${user.name}')">Del</button><button class="small-btn" style="background:#555; border:none;" onclick="app.adminBanUser('${user.name}', '${user.deviceId}')">Ban</button></div></div>`; }); }); 
+                dbRef.child('system/banned_devices').on('value', s => { const list = document.getElementById('adm-banned-list'); list.innerHTML = ''; if(s.exists()) { s.forEach(b => { list.innerHTML += `<div class="gift-item" style="display:flex; justify-content:space-between; align-items:center;"><div><div style="font-weight:bold; color:#ff4757;">${b.val()}</div><div style="font-size:0.6rem; font-family:monospace; color:#aaa;">${b.key}</div></div><button class="small-btn" style="background:#2ed573; border:none;" onclick="app.adminUnbanDevice('${b.key}')">Unban</button></div>`; }); } else { list.innerHTML = '<div style="color:#777; text-align:center;">Empty</div>'; } }); 
+                if(!document.getElementById('adm-embed-code').value) { document.getElementById('adm-embed-code').value = `<video width="100%" height="315" controls autoplay><source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4"></video>`; } 
+            },
+            
+            setLiveVideo: () => { const code = document.getElementById('adm-embed-code').value; if(code) dbRef.child('system/livestream').set({ active: true, html: code }); },
+            stopLiveVideo: () => { dbRef.child('system/livestream').set({ active: false }); },
+            toggleStreamSize: () => { const box = document.getElementById('floating-stream'); const icon = document.getElementById('stream-icon'); if(box.classList.contains('expanded')) { box.classList.remove('expanded'); icon.className = 'fas fa-expand'; } else { box.classList.add('expanded'); icon.className = 'fas fa-compress'; } },
+            adminCleanBadUsers: () => { if(confirm("Clean?")) dbRef.child('users').once('value', s => { let c = 0; s.forEach(u => { const v = u.val(); if(u.key === 'undefined' || !v.name) { dbRef.child('users/'+u.key).remove(); c++; } }); alert("Cleaned: "+c); }); },
+            adminDeleteAllUsers: () => { if(confirm("DELETE ALL?")) dbRef.child('users').once('value', s => { s.forEach(u => { if (u.val().name !== 'Admin') dbRef.child('users/' + u.key).remove(); }); alert("Done."); }); },
+            adminDeleteUser: (name) => { if(confirm("Delete " + name + "?")) dbRef.child('users/' + name).remove(); },
+            adminBanUser: (name, did) => { if(confirm("Ban " + name + "?")) { dbRef.child('system/banned_devices/' + did).set(name); dbRef.child('users/' + name).remove(); } },
+            adminUnbanDevice: (did) => { if(confirm("Unban?")) dbRef.child('system/banned_devices/' + did).remove(); },
+            toggleMatchTimer: () => { dbRef.child('system/live').once('value', s => { let l = s.val() || { active: true, t1: 'T1', t2: 'T2', s1: 0, s2: 0, timerStatus: 'paused', elapsedTime: 0, timerStartTime: 0 }; l.active = true; l.t1 = document.getElementById('adm-t1').value || l.t1; l.t2 = document.getElementById('adm-t2').value || l.t2; if(l.timerStatus === 'live') { l.timerStatus = 'paused'; l.elapsedTime += Math.floor((Date.now() - l.timerStartTime) / 1000); } else { l.timerStatus = 'live'; l.timerStartTime = Date.now(); } dbRef.child('system/live').update(l); }); },
+            updateScore: (t, d) => { dbRef.child('system/live').transaction(l => { if (l) { t === 't1' ? l.s1 = Math.max(0, l.s1 + d) : l.s2 = Math.max(0, l.s2 + d); if(d > 0) l.lastGoalTime = Date.now(); } return l; }); },
+            resetScore: () => { if(confirm("Reset?")) dbRef.child('system/live').update({ s1: 0, s2: 0, elapsedTime: 0, timerStatus: 'paused' }); },
+            endLiveMatch: () => { if(confirm("End?")) dbRef.child('system/live').update({ active: false }); },
+            addGift: () => { const n = document.getElementById('adm-gift-name').value; if(n) dbRef.child('system/gifts').push({name:n}); },
+            
+            // FEATURE: RECORD TO HISTORY IMMEDIATELY WHEN STARTING
+            startGiftSequence: (g) => { 
+                if(confirm(`Start ${g}?`)) { 
+                    dbRef.child('users').orderByChild('clicks').startAt(10).limitToFirst(100).once('value', s => { 
+                        const eligibleUsers = []; 
+                        s.forEach(u => { if(u.val().online && u.val().name !== 'Admin') eligibleUsers.push(u.val()); }); 
+                        if (eligibleUsers.length === 0) { alert("No one is eligible! (Kesekî 10 caran lê nedaye)"); return; } 
+                        
+                        const winner = eligibleUsers[Math.floor(Math.random() * eligibleUsers.length)].name; 
+                        const n = Date.now(); 
+                        
+                        // Push to History Log
+                        dbRef.child('system/winner_history').push({
+                            winner: winner,
+                            prize: g,
+                            time: n
+                        });
+
+                        dbRef.child('system/giveaway').set({ active: true, prize: g, startTime: n, stage1End: n+60000, stage2End: n+65000, stage3End: n+85000, winner: winner }); 
+                    }); 
+                } 
+            },
+            
+            forceStopGiveaway: () => dbRef.child('system/giveaway').update({ active: false }),
+            addLink: () => { const t=document.getElementById('adm-link-title').value, u=document.getElementById('adm-link-url').value; if(t&&u) dbRef.child('system/links').push({title:t, url:u}); },
+            addCompany: () => { const n=document.getElementById('comp-name').value, p=document.getElementById('comp-phone').value, l=document.getElementById('comp-logo').value; if(n) dbRef.child('system/companies').push({ name: n, phone: p, logo: l||"https://cdn-icons-png.flaticon.com/512/3135/3135715.png" }); },
+            deleteAllMessages: () => { if(confirm("Clear Messages?")) dbRef.child('messages').remove(); },
+            openUsersModal: () => { document.getElementById('users-modal').style.display = 'flex'; },
+            showToast: (t, b) => { document.getElementById('toast-title').innerText = t; document.getElementById('toast-body').innerText = b; const el = document.getElementById('toast'); el.classList.add('show'); document.getElementById('notif-sound').play().catch(()=>{}); setTimeout(() => el.classList.remove('show'), 4000); },
+            hideToast: () => document.getElementById('toast').classList.remove('show'),
+            viewImage: (src) => { document.getElementById('img-viewer').style.display = 'flex'; document.getElementById('img-full').src = src; }
+        };
+
+        app.init();
+    </script>
+</body>
+</html>
