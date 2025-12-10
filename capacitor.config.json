@@ -1,6 +1,6 @@
 {
   "appId": "com.kurdsport.app",
   "appName": "Kurd Sport",
-  "webDir": ".",
+  "webDir": "www",
   "bundledWebRuntime": false
 }
