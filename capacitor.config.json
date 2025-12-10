@@ -1,0 +1,6 @@
+{
+  "appId": "com.kurdsport.app",
+  "appName": "Kurd Sport",
+  "webDir": ".",
+  "bundledWebRuntime": false
+}
