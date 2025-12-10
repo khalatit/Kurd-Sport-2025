@@ -1,0 +1,7 @@
+{
+  "name": "Kurd Sport",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "custom"
+}
